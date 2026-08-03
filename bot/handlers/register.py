@@ -1,0 +1,76 @@
+from aiogram import Router
+from aiogram.types import Message
+from aiogram.fsm.context import FSMContext
+from database.crud import create_request
+import re
+from bot.states.register import RegisterState
+
+
+router = Router()
+
+
+@router.message(lambda message: message.text == "🎮 Привязать аккаунт")
+async def start_register(
+    message: Message,
+    state: FSMContext
+):
+    await state.set_state(RegisterState.nickname)
+
+    await message.answer(
+        "🎮 Введите ваш ник в клубе:"
+    )
+
+
+@router.message(RegisterState.nickname)
+async def get_nickname(
+    message: Message,
+    state: FSMContext
+):
+    await state.update_data(
+        nickname=message.text
+    )
+
+    await state.set_state(RegisterState.phone)
+
+    await message.answer(
+        "📱 Теперь введите номер телефона:"
+    )
+
+
+@router.message(RegisterState.phone)
+async def get_phone(
+    message: Message,
+    state: FSMContext
+):
+
+    phone = message.text.strip()
+
+    if not re.fullmatch(r"\d{10}", phone):
+        await message.answer(
+            "❌ Введите номер без +7 и 7\n\n"
+            "Пример:\n"
+            "9991234567"
+        )
+        return
+
+
+    data = await state.get_data()
+
+
+    await create_request(
+        telegram_id=message.from_user.id,
+        username=message.from_user.username,
+        nickname=data["nickname"],
+        phone=phone
+    )
+
+
+    await message.answer(
+        f"✅ Заявка создана!\n\n"
+        f"🎮 Ник: {data['nickname']}\n"
+        f"📱 Телефон: {phone}\n\n"
+        f"Ожидайте проверки администратора."
+    )
+
+
+    await state.clear()
