@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from database.crud import create_request
 import re
 from bot.states.register import RegisterState
-
+from database.crud import create_request, get_user
 
 router = Router()
 
@@ -42,6 +42,30 @@ async def get_phone(
     message: Message,
     state: FSMContext
 ):
+    user = await get_user(message.from_user.id)
+
+    if user:
+
+        if user.status == "approved":
+            await message.answer(
+                "✅ Ваш аккаунт уже подтвержден."
+            )
+
+        elif user.status == "pending":
+            await message.answer(
+                "⏳ Ваша заявка уже находится на проверке."
+            )
+
+        else:
+            await message.answer(
+                "❌ Ваша заявка была отклонена."
+            )
+
+        await state.clear()
+        return
+
+
+
 
     phone = message.text.strip()
 

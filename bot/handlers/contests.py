@@ -5,6 +5,7 @@ from aiogram.fsm.context import FSMContext
 from bot.states.contest import ContestState
 from bot.keyboards.contest import contest_menu
 from database.crud_contest import create_contest
+from database.crud_contest import get_contests
 
 
 router = Router()
@@ -139,34 +140,23 @@ async def get_prize(
 
     await state.clear()
 
-from database.crud_contest import get_contests
-
-
-@router.message(
-    lambda m: m.text == "📋 Список конкурсов"
-)
-async def contest_list(message: Message):
+@router.message(lambda m: m.text == "📋 Список конкурсов")
+async def contests_list(message: Message):
 
     contests = await get_contests()
 
     if not contests:
-        await message.answer(
-            "🎁 Конкурсов пока нет."
-        )
+        await message.answer("📭 Конкурсов пока нет.")
         return
 
+    for contest in contests:
 
-    text = "🎁 Список конкурсов:\n\n"
-
-
-    for c in contests:
-
-        text += (
-            f"🏆 {c.title}\n"
-            f"🎁 Приз: {c.prize}\n"
-            f"📝 {c.description}\n"
-            f"────────────\n"
+        await message.answer_photo(
+            photo=contest.photo_id,
+            caption=(
+                f"🏆 <b>{contest.title}</b>\n\n"
+                f"🎁 <b>Приз:</b> {contest.prize}\n\n"
+                f"📝 <b>Условия:</b>\n"
+                f"{contest.description}"
+            )
         )
-
-
-    await message.answer(text)

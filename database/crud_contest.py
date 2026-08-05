@@ -26,11 +26,8 @@ async def create_contest(
 
 
 async def get_contests():
-
     async with async_session() as session:
-
         result = await session.execute(
             select(Contest)
         )
-
         return result.scalars().all()

@@ -16,6 +16,9 @@ from bot.handlers import admin_requests
 from bot.handlers import contests
 from bot.handlers import navigation
 from bot.handlers import subscribe
+from bot.handlers import tokens
+from bot.handlers import users
+from bot.handlers import statistics
 
 async def main():
     logging.basicConfig(
@@ -42,6 +45,9 @@ async def main():
     dp.include_router(contests.router)
     dp.include_router(navigation.router)
     dp.include_router(subscribe.router)
+    dp.include_router(tokens.router)
+    dp.include_router(users.router)
+    dp.include_router(statistics.router)
 
     await dp.start_polling(bot)
 
