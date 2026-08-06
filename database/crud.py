@@ -155,3 +155,16 @@ async def get_statistics():
             "rejected": rejected or 0,
             "tokens": tokens or 0,
         }
+
+async def get_user(telegram_id):
+
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(User).where(
+                User.telegram_id == telegram_id
+            )
+        )
+
+        return result.scalar_one_or_none()
+

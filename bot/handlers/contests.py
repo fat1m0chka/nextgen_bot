@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from bot.states.contest import ContestState
 from bot.keyboards.contest import contest_menu
 from database.crud_contest import create_contest
-from database.crud_contest import get_contests
+from database.crud_contest import get_all_contests
 
 
 router = Router()
@@ -143,7 +143,7 @@ async def get_prize(
 @router.message(lambda m: m.text == "📋 Список конкурсов")
 async def contests_list(message: Message):
 
-    contests = await get_contests()
+    contests = await get_all_contests()
 
     if not contests:
         await message.answer("📭 Конкурсов пока нет.")
