@@ -1,7 +1,11 @@
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
-from database.crud import get_user_by_phone
+
+from database.crud import (
+    get_user_by_phone,
+    add_tokens
+)
 
 from bot.states.tokens import TokenState
 

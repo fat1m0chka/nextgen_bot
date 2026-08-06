@@ -5,6 +5,9 @@ from bot.keyboards.main import main_menu
 from bot.utils.admin import is_channel_admin
 from config.settings import settings
 from database.crud_contest import get_all_contests
+from bot.keyboards.client_contest import contest_join
+from aiogram.types import CallbackQuery
+from database.crud_contest import join_contest
 
 
 router = Router()
@@ -46,8 +49,36 @@ async def active_contests(message: Message):
         await message.answer_photo(
             photo=contest.photo_id,
             caption=(
-                f"🏆 <b>{contest.title}</b>\n\n"
+                f"🏆 {contest.title}\n\n"
                 f"📝 {contest.description}\n\n"
-                f"🎁 Приз: <b>{contest.prize}</b>"
-            )
+                f"🎁 {contest.prize}\n\n"
+                f"📅 {contest.start_at}"
+        ),
+        reply_markup=contest_join(contest.id)
+)
+
+@router.callback_query(lambda c: c.data.startswith("join_"))
+async def join(callback: CallbackQuery):
+
+    contest_id = int(
+        callback.data.split("_")[1]
+    )
+
+    ok = await join_contest(
+        contest_id,
+        callback.from_user.id
+    )
+
+    if ok:
+
+        await callback.answer(
+            "Вы участвуете 🎉",
+            show_alert=True
+        )
+
+    else:
+
+        await callback.answer(
+            "Вы уже участвуете",
+            show_alert=True
         )

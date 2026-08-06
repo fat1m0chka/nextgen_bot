@@ -114,13 +114,56 @@ async def get_desc(
 
 
 
-@router.message(
-    ContestState.prize
-)
-async def get_prize(
-    message: Message,
-    state: FSMContext
-):
+@router.message(ContestState.prize)
+async def get_prize(message: Message, state: FSMContext):
+
+    await state.update_data(
+        prize=message.text
+    )
+
+    await state.set_state(
+        ContestState.date
+    )
+
+    await message.answer(
+        "📅 Введите дату проведения\n\nПример:\n08.08.2026"
+    )
+
+from datetime import datetime
+
+@router.message(ContestState.date)
+async def get_date(message: Message, state: FSMContext):
+
+    try:
+        datetime.strptime(message.text, "%d.%m.%Y")
+    except:
+        await message.answer(
+            "Неверный формат.\n\n08.08.2026"
+        )
+        return
+
+    await state.update_data(
+        date=message.text
+    )
+
+    await state.set_state(
+        ContestState.time
+    )
+
+    await message.answer(
+        "🕓 Введите время\n\nПример:\n18:30"
+    )
+
+@router.message(ContestState.time)
+async def get_time(message: Message, state: FSMContext):
+
+    try:
+        datetime.strptime(message.text, "%H:%M")
+    except:
+        await message.answer(
+            "Неверное время.\n\n18:30"
+        )
+        return
 
     data = await state.get_data()
 
@@ -128,15 +171,14 @@ async def get_prize(
         photo_id=data["photo_id"],
         title=data["title"],
         description=data["description"],
-        prize=message.text
+        prize=data["prize"],
+        start_at=f'{data["date"]} {message.text}'
     )
-
 
     await message.answer(
         "✅ Конкурс создан!",
         reply_markup=contest_menu
     )
-
 
     await state.clear()
 
