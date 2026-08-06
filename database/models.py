@@ -1,6 +1,7 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import BigInteger, String, Integer
 from sqlalchemy import Column, Integer, String
+from sqlalchemy import ForeignKey
 
 class Base(DeclarativeBase):
     pass
@@ -49,14 +50,20 @@ class Contest(Base):
     id = Column(Integer, primary_key=True)
 
     photo_id = Column(String)
-
     title = Column(String)
-
     description = Column(String)
-
     prize = Column(String)
 
-    status = Column(
-        String,
-        default="active"
+    start_at = Column(String)
+
+class ContestUser(Base):
+    __tablename__ = "contest_users"
+
+    id = Column(Integer, primary_key=True)
+
+    contest_id = Column(
+        Integer,
+        ForeignKey("contests.id")
     )
+
+    telegram_id = Column(BigInteger)
