@@ -33,7 +33,8 @@ async def get_nickname(
     await state.set_state(RegisterState.phone)
 
     await message.answer(
-        "📱 Теперь введите номер телефона:"
+        "📱 Теперь введите номер телефона:\n"
+        "Введите номер без +7, 7, и 8"
     )
 
 

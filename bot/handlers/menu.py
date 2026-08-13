@@ -8,6 +8,8 @@ from database.crud_contest import get_all_contests
 from bot.keyboards.client_contest import contest_join
 from aiogram.types import CallbackQuery
 from database.crud_contest import join_contest
+from database.crud_contest import get_finished_contests
+from database.crud import get_user
 
 
 router = Router()
@@ -66,7 +68,8 @@ async def join(callback: CallbackQuery):
 
     ok = await join_contest(
         contest_id,
-        callback.from_user.id
+        callback.from_user.id,
+        1
     )
 
     if ok:
@@ -81,4 +84,78 @@ async def join(callback: CallbackQuery):
         await callback.answer(
             "Вы уже участвуете",
             show_alert=True
+        )
+
+@router.message(lambda m: m.text == "🏆 Победители")
+async def winners(message: Message):
+
+    contests = await get_finished_contests()
+
+    if not contests:
+        await message.answer(
+            "🏆 Пока завершённых конкурсов нет."
+        )
+        return
+
+    for contest in contests:
+        await message.answer_photo(
+            contest.photo_id,
+            caption=(
+                f"🏆 <b>{contest.title}</b>\n\n"
+                f"🎁 Приз: {contest.prize}\n"
+                f"🥇 Победитель: <b>{contest.winner}</b>"
+            ),
+            parse_mode="HTML"
+        )
+
+@router.message(lambda m: m.text == "👤 Мой профиль")
+async def profile(message: Message, bot: Bot):
+
+    user = await get_user(message.from_user.id)
+
+    if not user:
+        await message.answer(
+            "❌ Вы еще не зарегистрированы."
+        )
+        return
+
+
+    statuses = {
+        "approved": "✅ Подтвержден",
+        "pending": "🟡 На проверке",
+        "rejected": "❌ Отклонен"
+    }
+
+
+    photos = await bot.get_user_profile_photos(
+        user_id=message.from_user.id,
+        limit=1
+    )
+
+
+    text = (
+        f"👤 <b>Ваш профиль</b>\n\n"
+        f"🆔 ID: <code>{user.telegram_id}</code>\n"
+        f"🎮 Ник: {user.nickname or 'Не указан'}\n"
+        f"📞 Телефон: {user.phone or 'Не указан'}\n\n"
+        f"🪙 Токены: <b>{user.tokens}</b>\n"
+        f"📄 Статус: {statuses.get(user.status)}"
+    )
+
+
+    if photos.total_count > 0:
+
+        photo_id = photos.photos[0][-1].file_id
+
+        await message.answer_photo(
+            photo=photo_id,
+            caption=text,
+            parse_mode="HTML"
+        )
+
+    else:
+
+        await message.answer(
+            text,
+            parse_mode="HTML"
         )

@@ -1,16 +1,12 @@
 import asyncio
 import logging
 
-from aiogram import Bot, Dispatcher
-from aiogram.client.default import DefaultBotProperties
-from aiogram.enums import ParseMode
-from bot.handlers import check
+from bot.loader import bot, dp
 
+from bot.handlers import check
 from bot.handlers import menu
-from config.settings import settings
 from bot.handlers import start
 from bot.handlers import admin
-from database.db import init_db
 from bot.handlers import register
 from bot.handlers import admin_requests
 from bot.handlers import contests
@@ -19,22 +15,18 @@ from bot.handlers import subscribe
 from bot.handlers import tokens
 from bot.handlers import users
 from bot.handlers import statistics
+from bot.handlers import profile
+
+from database.db import init_db
+
 
 async def main():
+
     logging.basicConfig(
         level=logging.INFO
     )
 
     await init_db()
-
-    bot = Bot(
-        token=settings.BOT_TOKEN,
-        default=DefaultBotProperties(
-            parse_mode=ParseMode.HTML
-        )
-    )
-
-    dp = Dispatcher()
 
     dp.include_router(start.router)
     dp.include_router(register.router)
@@ -48,6 +40,7 @@ async def main():
     dp.include_router(tokens.router)
     dp.include_router(users.router)
     dp.include_router(statistics.router)
+    dp.include_router(profile.router)
 
     await dp.start_polling(bot)
 

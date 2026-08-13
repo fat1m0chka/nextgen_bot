@@ -7,10 +7,10 @@ def user_menu(is_admin=False):
         [KeyboardButton(text="🎁 Активные конкурсы")],
         [
             KeyboardButton(text="🪙 Мои токены"),
-            KeyboardButton(text="🏆 Победители")
+            KeyboardButton(text="👤 Мой профиль")
         ],
         [
-            KeyboardButton(text="📜 История")
+            KeyboardButton(text="🏆 Победители")
         ]
     ]
 
@@ -23,7 +23,6 @@ def user_menu(is_admin=False):
         keyboard=keyboard,
         resize_keyboard=True
     )
-
 
 def main_menu(is_admin=False):
 
