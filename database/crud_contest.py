@@ -3,7 +3,7 @@ from sqlalchemy import select
 from database.db import async_session
 from database.models import Contest
 from database.models import ContestUser
-
+from database.models import ContestUser, User
 
 async def create_contest(
     photo_id,
@@ -38,27 +38,57 @@ async def get_all_contests():
 
         return result.scalars().all()
 
-async def join_contest(contest_id, telegram_id):
+async def join_contest(
+    contest_id: int,
+    telegram_id: int,
+    tickets: int
+):
+
+    async with async_session() as session:
+
+        user = await session.execute(
+            select(User).where(
+                User.telegram_id == telegram_id
+            )
+        )
+
+        user = user.scalar_one_or_none()
+
+
+        if not user:
+            return False
+
+
+        if user.tokens < tickets:
+            return False
+
+
+        # списываем токены
+        user.tokens -= tickets
+
+
+        entry = ContestUser(
+            contest_id=contest_id,
+            telegram_id=telegram_id,
+            tickets=tickets
+        )
+
+
+        session.add(entry)
+
+        await session.commit()
+
+
+        return True
+
+async def get_finished_contests():
 
     async with async_session() as session:
 
         result = await session.execute(
-            select(ContestUser).where(
-                ContestUser.contest_id == contest_id,
-                ContestUser.telegram_id == telegram_id
+            select(Contest).where(
+                Contest.winner != None
             )
         )
 
-        if result.scalar():
-            return False
-
-        session.add(
-            ContestUser(
-                contest_id=contest_id,
-                telegram_id=telegram_id
-            )
-        )
-
-        await session.commit()
-
-        return True
+        return result.scalars().all()

@@ -55,6 +55,7 @@ class Contest(Base):
     prize = Column(String)
 
     start_at = Column(String)
+    winner = Column(String, nullable=True)
 
 class ContestUser(Base):
     __tablename__ = "contest_users"
@@ -67,3 +68,8 @@ class ContestUser(Base):
     )
 
     telegram_id = Column(BigInteger)
+
+    tickets = Column(
+        Integer,
+        default=1
+    )

@@ -168,3 +168,25 @@ async def get_user(telegram_id):
 
         return result.scalar_one_or_none()
 
+async def get_finished_contests():
+
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(Contest).where(
+                Contest.winner.is_not(None)
+            )
+        )
+
+        return result.scalars().all()
+
+async def get_user_by_id(user_id):
+
+    async with async_session() as session:
+
+        user = await session.get(
+            User,
+            user_id
+        )
+
+        return user
