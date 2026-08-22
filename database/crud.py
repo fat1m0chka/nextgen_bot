@@ -190,3 +190,27 @@ async def get_user_by_id(user_id):
         )
 
         return user
+
+async def can_join_contest(
+    telegram_id: int
+):
+    async with async_session() as session:
+
+        result = await session.execute(
+            select(User).where(
+                User.telegram_id == telegram_id
+            )
+        )
+
+        user = result.scalar_one_or_none()
+
+        if not user:
+            return False, "not_registered"
+
+        if user.status != "approved":
+            return False, "not_approved"
+
+        if user.tokens <= 0:
+            return False, "no_tokens"
+
+        return True, user

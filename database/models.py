@@ -47,29 +47,55 @@ class User(Base):
 class Contest(Base):
     __tablename__ = "contests"
 
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(
+        primary_key=True
+    )
 
-    photo_id = Column(String)
-    title = Column(String)
-    description = Column(String)
-    prize = Column(String)
+    photo_id: Mapped[str] = mapped_column(
+        String
+    )
 
-    start_at = Column(String)
-    winner = Column(String, nullable=True)
+    title: Mapped[str] = mapped_column(
+        String
+    )
+
+    description: Mapped[str] = mapped_column(
+        String
+    )
+
+    prize: Mapped[str] = mapped_column(
+        String
+    )
+
+    start_at: Mapped[str] = mapped_column(
+        String
+    )
+
+    end_at: Mapped[str] = mapped_column(
+        String
+    )
+
+    winner_count: Mapped[int] = mapped_column(
+        Integer,
+        default=1
+    )
+
+    status: Mapped[str] = mapped_column(
+        String,
+        default="active"
+    )
 
 class ContestUser(Base):
     __tablename__ = "contest_users"
 
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(
+        primary_key=True
+    )
 
-    contest_id = Column(
-        Integer,
+    contest_id: Mapped[int] = mapped_column(
         ForeignKey("contests.id")
     )
 
-    telegram_id = Column(BigInteger)
-
-    tickets = Column(
-        Integer,
-        default=1
+    telegram_id: Mapped[int] = mapped_column(
+        BigInteger
     )

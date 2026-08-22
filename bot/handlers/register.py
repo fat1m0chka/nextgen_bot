@@ -1,7 +1,6 @@
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
-from database.crud import create_request
 import re
 from bot.states.register import RegisterState
 from database.crud import create_request, get_user
@@ -26,15 +25,28 @@ async def get_nickname(
     message: Message,
     state: FSMContext
 ):
+    nickname = (message.text or "").strip()
+
+    if not re.fullmatch(r"[А-Яа-яA-Za-z0-9_-]{2,32}", nickname):
+        await message.answer(
+            "❌ Некорректный ник.\n\n"
+            "Разрешены:\n"
+            "• русские и английские буквы\n"
+            "• цифры\n"
+            "• символы _ и -\n\n"
+            "Длина: от 2 до 32 символов."
+        )
+        return
+
     await state.update_data(
-        nickname=message.text
+        nickname=nickname
     )
 
     await state.set_state(RegisterState.phone)
 
     await message.answer(
         "📱 Теперь введите номер телефона:\n"
-        "Введите номер без +7, 7, и 8"
+        "Введите номер без +7, 7 и 8"
     )
 
 

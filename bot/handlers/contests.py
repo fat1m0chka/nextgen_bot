@@ -1,12 +1,21 @@
-from aiogram import Router
-from aiogram.types import Message
+from aiogram import Router, F
+from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 from bot.states.contest import ContestState
-from bot.keyboards.contest import contest_menu
-from database.crud_contest import create_contest
-from database.crud_contest import get_all_contests
+from bot.keyboards.client_contest import contest_join
+from bot.keyboards.contest import contest_menu, contest_admin_menu
 
+from database.crud_contest import (
+    create_contest,
+    get_all_contests,
+    get_contest,
+    join_contest,
+    is_joined,
+    finish_contest
+)
+
+from database.crud import get_user
 
 router = Router()
 
@@ -159,7 +168,7 @@ async def get_time(message: Message, state: FSMContext):
 
     try:
         datetime.strptime(message.text, "%H:%M")
-    except:
+    except ValueError:
         await message.answer(
             "Неверное время.\n\n18:30"
         )
@@ -167,12 +176,16 @@ async def get_time(message: Message, state: FSMContext):
 
     data = await state.get_data()
 
+    start_at = f'{data["date"]} {message.text}'
+    end_at = f'{data["date"]} 23:59'
+
     await create_contest(
         photo_id=data["photo_id"],
         title=data["title"],
         description=data["description"],
         prize=data["prize"],
-        start_at=f'{data["date"]} {message.text}'
+        start_at=start_at,
+        end_at=end_at
     )
 
     await message.answer(
@@ -193,12 +206,90 @@ async def contests_list(message: Message):
 
     for contest in contests:
 
-        await message.answer_photo(
-            photo=contest.photo_id,
-            caption=(
+        if contest.status == "finished":
+
+            caption = (
                 f"🏆 <b>{contest.title}</b>\n\n"
                 f"🎁 <b>Приз:</b> {contest.prize}\n\n"
                 f"📝 <b>Условия:</b>\n"
-                f"{contest.description}"
+                f"{contest.description}\n\n"
+                f"🔴 <b>Статус: Завершён</b>"
             )
+
+            await message.answer_photo(
+                photo=contest.photo_id,
+                caption=caption,
+                parse_mode="HTML"
+            )
+
+        else:
+
+            caption = (
+                f"🏆 <b>{contest.title}</b>\n\n"
+                f"🎁 <b>Приз:</b> {contest.prize}\n\n"
+                f"📝 <b>Условия:</b>\n"
+                f"{contest.description}\n\n"
+                f"🟢 <b>Статус: Активен</b>"
+            )
+
+            await message.answer_photo(
+                photo=contest.photo_id,
+                caption=caption,
+                reply_markup=contest_admin_menu(contest.id),
+                parse_mode="HTML"
+            )
+
+
+@router.callback_query(
+    lambda c: c.data.startswith("finish_contest_")
+)
+async def finish_contest_handler(callback: CallbackQuery):
+
+    contest_id = int(
+        callback.data.split("_")[-1]
+    )
+
+    result = await finish_contest(contest_id)
+
+    if result == "not_found":
+        await callback.answer(
+            "❌ Конкурс не найден.",
+            show_alert=True
         )
+        return
+
+    if result == "already_finished":
+        await callback.answer(
+            "⚠️ Конкурс уже завершён.",
+            show_alert=True
+        )
+        return
+
+    if result == "no_participants":
+
+        await callback.answer(
+            "Конкурс завершён, участников нет.",
+            show_alert=True
+        )
+
+        await callback.message.answer(
+            "⏹ <b>Конкурс завершён досрочно.</b>\n\n"
+            "👥 Участников не было.\n"
+            "🏆 Победитель не определён.",
+            parse_mode="HTML"
+        )
+
+        return
+
+    winner_id = result
+
+    await callback.answer(
+        "✅ Конкурс завершён!"
+    )
+
+    await callback.message.answer(
+        f"⏹ <b>Конкурс завершён досрочно!</b>\n\n"
+        f"🏆 Победитель:\n"
+        f"<code>{winner_id}</code>",
+        parse_mode="HTML"
+    )

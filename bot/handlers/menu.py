@@ -1,4 +1,4 @@
-from aiogram import Router
+from aiogram import Router, Bot
 from aiogram.types import Message
 from bot.keyboards.admin import admin_menu
 from bot.keyboards.main import main_menu
@@ -66,23 +66,38 @@ async def join(callback: CallbackQuery):
         callback.data.split("_")[1]
     )
 
-    ok = await join_contest(
+    result = await join_contest(
         contest_id,
-        callback.from_user.id,
-        1
+        callback.from_user.id
     )
 
-    if ok:
-
+    if result == "not_registered":
         await callback.answer(
-            "Вы участвуете 🎉",
+            "❌ Сначала привяжите аккаунт",
             show_alert=True
         )
 
-    else:
-
+    elif result == "not_approved":
         await callback.answer(
-            "Вы уже участвуете",
+            "⏳ Ваш аккаунт еще не подтвержден",
+            show_alert=True
+        )
+
+    elif result == "no_tokens":
+        await callback.answer(
+            "🪙 Для участия нужен хотя бы 1 токен",
+            show_alert=True
+        )
+
+    elif result == "already_joined":
+        await callback.answer(
+            "ℹ️ Вы уже участвуете в этом конкурсе",
+            show_alert=True
+        )
+
+    elif result == "joined":
+        await callback.answer(
+            "🎉 Вы участвуете в конкурсе!",
             show_alert=True
         )
 
