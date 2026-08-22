@@ -44,3 +44,33 @@ nextgen_bot/
 ├── config/               # Загрузка конфигурации из .env
 ├── main.py               # Точка входа для запуска бота
 └── requirements.txt      # Зависимости проекта
+```
+
+## Быстрый запуск
+
+```text
+git clone [https://github.com/fat1m0chka/nextgen_bot.git](https://github.com/fat1m0chka/nextgen_bot.git)
+cd nextgen_bot
+```
+
+## Безопасный запуск
+
+```text
+# Windows
+python -m venv venv
+venv\Scripts\activate
+
+# Linux / macOS
+python3 -m venv venv
+source venv/bin/activate
+```
+## Установка зависимостей
+
+```text
+pip install -r requirements.txt
+```
+## Запуск бота
+
+```text
+python -m bot.main
+```
