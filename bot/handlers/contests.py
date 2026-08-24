@@ -1,4 +1,6 @@
-from aiogram import Router, F
+from datetime import datetime
+
+from aiogram import Router
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
@@ -15,10 +17,13 @@ from database.crud_contest import (
     finish_contest
 )
 
-from database.crud import get_user
 
 router = Router()
 
+
+# =========================
+# АДМИН: КОНКУРСЫ
+# =========================
 
 @router.message(
     lambda m: m.text == "🎁 Конкурсы"
@@ -31,6 +36,9 @@ async def contest_start(message: Message):
     )
 
 
+# =========================
+# СОЗДАНИЕ
+# =========================
 
 @router.message(
     lambda m: m.text == "➕ Создать конкурс"
@@ -48,6 +56,7 @@ async def create_start(
         "📸 Отправьте картинку конкурса"
     )
 
+
 @router.message(
     ContestState.photo
 )
@@ -57,26 +66,24 @@ async def get_photo(
 ):
 
     if not message.photo:
+
         await message.answer(
             "Нужна именно картинка"
         )
-        return
 
+        return
 
     await state.update_data(
         photo_id=message.photo[-1].file_id
     )
 
-
     await state.set_state(
         ContestState.title
     )
 
-
     await message.answer(
         "✏️ Название конкурса:"
     )
-
 
 
 @router.message(
@@ -100,7 +107,6 @@ async def get_title(
     )
 
 
-
 @router.message(
     ContestState.description
 )
@@ -122,9 +128,13 @@ async def get_desc(
     )
 
 
-
-@router.message(ContestState.prize)
-async def get_prize(message: Message, state: FSMContext):
+@router.message(
+    ContestState.prize
+)
+async def get_prize(
+    message: Message,
+    state: FSMContext
+):
 
     await state.update_data(
         prize=message.text
@@ -135,20 +145,33 @@ async def get_prize(message: Message, state: FSMContext):
     )
 
     await message.answer(
-        "📅 Введите дату проведения\n\nПример:\n08.08.2026"
+        "📅 Введите дату проведения\n\n"
+        "Пример:\n"
+        "08.08.2026"
     )
 
-from datetime import datetime
 
-@router.message(ContestState.date)
-async def get_date(message: Message, state: FSMContext):
+@router.message(
+    ContestState.date
+)
+async def get_date(
+    message: Message,
+    state: FSMContext
+):
 
     try:
-        datetime.strptime(message.text, "%d.%m.%Y")
-    except:
-        await message.answer(
-            "Неверный формат.\n\n08.08.2026"
+        datetime.strptime(
+            message.text,
+            "%d.%m.%Y"
         )
+
+    except ValueError:
+
+        await message.answer(
+            "Неверный формат.\n\n"
+            "Пример: 08.08.2026"
+        )
+
         return
 
     await state.update_data(
@@ -160,24 +183,44 @@ async def get_date(message: Message, state: FSMContext):
     )
 
     await message.answer(
-        "🕓 Введите время\n\nПример:\n18:30"
+        "🕓 Введите время\n\n"
+        "Пример:\n"
+        "18:30"
     )
 
-@router.message(ContestState.time)
-async def get_time(message: Message, state: FSMContext):
+
+@router.message(
+    ContestState.time
+)
+async def get_time(
+    message: Message,
+    state: FSMContext
+):
 
     try:
-        datetime.strptime(message.text, "%H:%M")
-    except ValueError:
-        await message.answer(
-            "Неверное время.\n\n18:30"
+        datetime.strptime(
+            message.text,
+            "%H:%M"
         )
+
+    except ValueError:
+
+        await message.answer(
+            "Неверное время.\n\n"
+            "Пример: 18:30"
+        )
+
         return
 
     data = await state.get_data()
 
-    start_at = f'{data["date"]} {message.text}'
-    end_at = f'{data["date"]} 23:59'
+    start_at = (
+        f'{data["date"]} {message.text}'
+    )
+
+    end_at = (
+        f'{data["date"]} 23:59'
+    )
 
     await create_contest(
         photo_id=data["photo_id"],
@@ -195,13 +238,24 @@ async def get_time(message: Message, state: FSMContext):
 
     await state.clear()
 
-@router.message(lambda m: m.text == "📋 Список конкурсов")
+
+# =========================
+# АДМИН: СПИСОК
+# =========================
+
+@router.message(
+    lambda m: m.text == "📋 Список конкурсов"
+)
 async def contests_list(message: Message):
 
     contests = await get_all_contests()
 
     if not contests:
-        await message.answer("📭 Конкурсов пока нет.")
+
+        await message.answer(
+            "📭 Конкурсов пока нет."
+        )
+
         return
 
     for contest in contests:
@@ -235,34 +289,50 @@ async def contests_list(message: Message):
             await message.answer_photo(
                 photo=contest.photo_id,
                 caption=caption,
-                reply_markup=contest_admin_menu(contest.id),
+                reply_markup=contest_admin_menu(
+                    contest.id
+                ),
                 parse_mode="HTML"
             )
 
 
+# =========================
+# ДОСРОЧНОЕ ЗАВЕРШЕНИЕ
+# =========================
+
 @router.callback_query(
-    lambda c: c.data.startswith("finish_contest_")
+    lambda c: c.data.startswith(
+        "finish_contest_"
+    )
 )
-async def finish_contest_handler(callback: CallbackQuery):
+async def finish_contest_handler(
+    callback: CallbackQuery
+):
 
     contest_id = int(
         callback.data.split("_")[-1]
     )
 
-    result = await finish_contest(contest_id)
+    result = await finish_contest(
+        contest_id
+    )
 
     if result == "not_found":
+
         await callback.answer(
             "❌ Конкурс не найден.",
             show_alert=True
         )
+
         return
 
     if result == "already_finished":
+
         await callback.answer(
             "⚠️ Конкурс уже завершён.",
             show_alert=True
         )
+
         return
 
     if result == "no_participants":
@@ -281,14 +351,41 @@ async def finish_contest_handler(callback: CallbackQuery):
 
         return
 
+    # ID победителя
     winner_id = result
+
+    # Получаем конкурс для текста сообщения
+    contest = await get_contest(
+        contest_id
+    )
+
+    # Уведомляем победителя
+    try:
+
+        await callback.bot.send_message(
+            winner_id,
+            "🎉 <b>ПОЗДРАВЛЯЕМ!</b>\n\n"
+            f"Вы выиграли конкурс "
+            f"<b>«{contest.title}»</b>! 🏆\n\n"
+            f"🎁 Приз: <b>{contest.prize}</b>\n\n"
+            "Администратор свяжется с вами "
+            "для получения приза.",
+            parse_mode="HTML"
+        )
+
+    except Exception as e:
+
+        print(
+            f"Не удалось отправить сообщение "
+            f"победителю {winner_id}: {e}"
+        )
 
     await callback.answer(
         "✅ Конкурс завершён!"
     )
 
     await callback.message.answer(
-        f"⏹ <b>Конкурс завершён досрочно!</b>\n\n"
+        "⏹ <b>Конкурс завершён досрочно!</b>\n\n"
         f"🏆 Победитель:\n"
         f"<code>{winner_id}</code>",
         parse_mode="HTML"

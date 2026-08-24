@@ -1,8 +1,9 @@
 from sqlalchemy import select
-
 from database.db import async_session
 from database.models import Contest, ContestUser, User
+
 import random
+
 
 # =========================
 # СОЗДАНИЕ КОНКУРСА
@@ -26,7 +27,8 @@ async def create_contest(
             start_at=start_at,
             end_at=end_at,
             winner_count=1,
-            status="active"
+            status="active",
+            winner_id=None
         )
 
         session.add(contest)
@@ -39,6 +41,7 @@ async def create_contest(
 # =========================
 
 async def get_all_contests():
+
     async with async_session() as session:
 
         result = await session.execute(
@@ -53,6 +56,7 @@ async def get_all_contests():
 # =========================
 
 async def get_contest(contest_id: int):
+
     async with async_session() as session:
 
         result = await session.execute(
@@ -72,6 +76,7 @@ async def join_contest(
     contest_id: int,
     telegram_id: int
 ):
+
     async with async_session() as session:
 
         # Проверяем пользователя
@@ -94,6 +99,21 @@ async def join_contest(
         if user.tokens <= 0:
             return "no_tokens"
 
+        # Проверяем конкурс
+        result = await session.execute(
+            select(Contest).where(
+                Contest.id == contest_id
+            )
+        )
+
+        contest = result.scalar_one_or_none()
+
+        if not contest:
+            return "contest_not_found"
+
+        if contest.status == "finished":
+            return "contest_finished"
+
         # Проверяем, участвует ли уже
         result = await session.execute(
             select(ContestUser).where(
@@ -115,6 +135,9 @@ async def join_contest(
 
         session.add(participant)
 
+        # ВАЖНО:
+        # токены НЕ списываем
+
         await session.commit()
 
         return "joined"
@@ -128,6 +151,7 @@ async def is_joined(
     contest_id: int,
     telegram_id: int
 ):
+
     async with async_session() as session:
 
         result = await session.execute(
@@ -149,6 +173,7 @@ async def is_joined(
 async def get_contest_participants(
     contest_id: int
 ):
+
     async with async_session() as session:
 
         result = await session.execute(
@@ -159,26 +184,30 @@ async def get_contest_participants(
 
         return result.scalars().all()
 
+
 # =========================
 # ЗАВЕРШЕННЫЕ КОНКУРСЫ
 # =========================
 
 async def get_finished_contests():
+
     async with async_session() as session:
 
         result = await session.execute(
             select(Contest).where(
-                Contest.winner.is_not(None)
+                Contest.status == "finished"
             )
         )
 
         return result.scalars().all()
 
+
 # =========================
-# ДОСРОЧНОЕ ЗАВЕРШЕНИЕ КОНКУРСА
+# ДОСРОЧНОЕ ЗАВЕРШЕНИЕ
 # =========================
 
 async def finish_contest(contest_id: int):
+
     async with async_session() as session:
 
         # Получаем конкурс
@@ -205,18 +234,23 @@ async def finish_contest(contest_id: int):
 
         participants = result.scalars().all()
 
+        # Если участников нет
         if not participants:
+
             contest.status = "finished"
-            contest.winner = None
+            contest.winner_id = None
 
             await session.commit()
 
             return "no_participants"
 
-        # Пока один победитель
+        # Выбираем одного победителя
         winner = random.choice(participants)
 
-        contest.winner = winner.telegram_id
+        # Сохраняем ID победителя
+        contest.winner_id = winner.telegram_id
+
+        # Завершаем конкурс
         contest.status = "finished"
 
         await session.commit()

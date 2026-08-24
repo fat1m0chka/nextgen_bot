@@ -16,6 +16,7 @@ from bot.handlers import tokens
 from bot.handlers import users
 from bot.handlers import statistics
 from bot.handlers import profile
+from bot.handlers import client_contest
 
 from database.db import init_db
 
@@ -41,6 +42,7 @@ async def main():
     dp.include_router(users.router)
     dp.include_router(statistics.router)
     dp.include_router(profile.router)
+    dp.include_router(client_contest.router)
 
     await dp.start_polling(bot)
 

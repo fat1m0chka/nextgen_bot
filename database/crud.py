@@ -214,3 +214,11 @@ async def can_join_contest(
             return False, "no_tokens"
 
         return True, user
+
+async def get_active_admins_ids() -> list[int]:
+    # Пример запроса для SQLAlchemy:
+    # Ищем всех пользователей, у которых is_admin == True и admin_mode == True
+    # Это зависит от твоей модели базы данных.
+    
+    # Заглушка, пока ты не впишешь свой запрос к БД:
+    return [123456789, 987654321]

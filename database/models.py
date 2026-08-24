@@ -1,10 +1,11 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import BigInteger, String, Integer
-from sqlalchemy import Column, Integer, String
-from sqlalchemy import ForeignKey
+from sqlalchemy import BigInteger, String, Integer, ForeignKey
+from sqlalchemy import UniqueConstraint
+
 
 class Base(DeclarativeBase):
     pass
+
 
 class User(Base):
 
@@ -44,7 +45,9 @@ class User(Base):
         default="pending"
     )
 
+
 class Contest(Base):
+
     __tablename__ = "contests"
 
     id: Mapped[int] = mapped_column(
@@ -85,8 +88,23 @@ class Contest(Base):
         default="active"
     )
 
+    winner_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        nullable=True
+    )
+
+
 class ContestUser(Base):
+
     __tablename__ = "contest_users"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "contest_id",
+            "telegram_id",
+            name="uq_contest_user"
+        ),
+    )
 
     id: Mapped[int] = mapped_column(
         primary_key=True

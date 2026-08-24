@@ -118,7 +118,7 @@ async def winners(message: Message):
             caption=(
                 f"🏆 <b>{contest.title}</b>\n\n"
                 f"🎁 Приз: {contest.prize}\n"
-                f"🥇 Победитель: <b>{contest.winner}</b>"
+                f"🥇 Победитель: <b>{contest.winner_id}</b>"
             ),
             parse_mode="HTML"
         )
