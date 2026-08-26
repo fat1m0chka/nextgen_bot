@@ -222,3 +222,13 @@ async def get_active_admins_ids() -> list[int]:
     
     # Заглушка, пока ты не впишешь свой запрос к БД:
     return [123456789, 987654321]
+
+async def create_user(telegram_id: int, telegram_username: str | None = None):
+    async with async_session() as session:
+        user = User(
+            telegram_id=telegram_id,
+            telegram_username=telegram_username
+        )
+        session.add(user)
+        await session.commit()
+        return user
