@@ -22,13 +22,13 @@ async def start_handler(message: Message):
     )
 
     if not is_subscribed:
-    await message.answer(
-        "❌ Для участия в конкурсе подпишитесь на канал:",
-        reply_markup=subscribe_keyboard(
-            settings.CHANNEL_USERNAME
+        await message.answer(
+            "❌ Для участия в конкурсе подпишитесь на канал:",
+            reply_markup=subscribe_keyboard(
+                settings.CHANNEL_USERNAME
+            )
         )
-    )
-    return
+        return
 
     admin = await is_channel_admin(
         message.bot,
