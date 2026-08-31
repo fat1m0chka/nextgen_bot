@@ -1,3 +1,16 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(
+    0,
+    str(Path(__file__).resolve().parent.parent)
+)
+
+from bot.loader import bot, dp
+
+
+
+
 import asyncio
 import logging
 
